@@ -1,0 +1,7 @@
+With Microlib:
+Loops: 200, Iterations: 1, Duration: 59289/1000 sec.
+C Converted Double Precision Whetstones: 339.0 KIPS
+
+With StandardLib:
+Loops: 200, Iterations: 1, Duration: 23709/1000 sec.
+C Converted Double Precision Whetstones: 869.6 KIPS

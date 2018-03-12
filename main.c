@@ -231,10 +231,16 @@ int main(void)
 	  
 	LED_Initialize();
 	
-	printf("XMC2Go Whetstone @ %u Hz %d %d\n", 
+	printf("XMC2Go Whetstone @ %u Hz %08X %u\n", 
 	SystemCoreClock, 
-	sizeof(float), 
-	sizeof(double));
+	SCB->CPUID, 
+	__ARMCC_VERSION);
+	
+	#ifdef __MICROLIB
+	printf("With Microlib\n");
+	#else
+	printf("With StandardLib\n");
+	#endif
 
 LCONT:
 /*
@@ -520,13 +526,13 @@ C--------------------------------------------------------------------
 		/* Convert temperature to Celcius */
 		temp_C = temp_k - 273;
 
-//		printf("%u %f %f %f\tTSE_I=%u 'C\n", status, snr1, snr2, snr3, temp_C);
+		printf("TSE_I=%u 'C\n",temp_C);
 				
     LED_On(0);
     LED_On(1);
 		
-		lockTick = g_Ticks;
-		while((lockTick+4000) > g_Ticks)
+		lockTick = HAL_GetTick();
+		while((lockTick+4000) > HAL_GetTick())
 		{
 			__NOP();
 			__WFI();
@@ -535,8 +541,8 @@ C--------------------------------------------------------------------
     LED_Off(0);
     LED_Off(1);
 		
-		lockTick = g_Ticks;
-		while((lockTick+4000) > g_Ticks)
+		lockTick = HAL_GetTick();
+		while((lockTick+4000) > HAL_GetTick())
 		{
 			__NOP();
 			__WFI();
