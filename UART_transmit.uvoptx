@@ -22,7 +22,7 @@
   </DaveTm>
 
   <Target>
-    <TargetName>2go_restrict_demo</TargetName>
+    <TargetName>2go_ee_emu</TargetName>
     <ToolsetNumber>0x4</ToolsetNumber>
     <ToolsetName>ARM-ADS</ToolsetName>
     <TargetOption>
