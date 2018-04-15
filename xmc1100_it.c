@@ -3,7 +3,7 @@
 
 void HardFault_Handler(void)
 {
-	printf(__FUNCTION__);
+	printf(__func__);
 	while(1)
 	{;}
 }

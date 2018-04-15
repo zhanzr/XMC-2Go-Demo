@@ -8,7 +8,6 @@
 #include "Driver_USART.h"
 #include "xmc_uart.h"
 #include "Board_LED.h"
-#include "XMC1000_TSE.h"
 
 extern ARM_DRIVER_USART Driver_USART0;
 static ARM_DRIVER_USART *UARTdrv = &Driver_USART0; 
@@ -44,9 +43,14 @@ int stdout_putchar(int ch)
 	return ch;
 }
 
+uint32_t g_in_handler_msp;
 void SysTick_Handler(void)
 {
-  g_Ticks++;
+//  g_Ticks++;
+	
+	g_in_handler_msp = __get_MSP();
+	__NOP();
+//	printf("gMSP:%08X\n", g_in_handler_msp);
 }     
 
 uint32_t HAL_GetTick(void)
@@ -54,28 +58,21 @@ uint32_t HAL_GetTick(void)
 	return g_Ticks;
 }
 
-void TestFunct1(uint32_t* pA, uint32_t* pB, uint32_t* pC)
+void testFunc(void)
 {
-	*pA += *pC;
-	*pB += *pC;
+	printf("MSP:%08X\n", __get_MSP());
 }
 
-void TestFunct2(uint32_t* restrict pA, uint32_t* restrict pB, uint32_t* restrict pC)
-{
-	*pA += *pC;
-	*pB += *pC;
-}
-
+uint32_t g_in_thread_msp;
+uint32_t lockTick;
+uint32_t temp_C;
 int main(void)
 {
-	uint32_t lockTick;
-	uint32_t temp_k;
-	uint32_t temp_C;
-
 	/* Enable DTS */
 	XMC_SCU_StartTempMeasurement();
 	
-  SysTick_Config(SystemCoreClock / 1000);
+//  SysTick_Config(SystemCoreClock / 1000);
+  SysTick_Config(SystemCoreClock / 2);
 	
   /*Initialize the UART driver */
   UARTdrv->Initialize(UART_cb);
@@ -91,9 +88,10 @@ int main(void)
 	  
 	LED_Initialize();
 	
-	printf("XMC2Go restrict demo @ %u Hz %08X %u\n", 
+	printf("XMC2Go Fault Test demo @ %u Hz %08X %08X %u\n", 
 	SystemCoreClock, 
 	SCB->CPUID, 
+	SCB->CCR,
 	__ARMCC_VERSION);
 	
 	#ifdef __MICROLIB
@@ -102,60 +100,43 @@ int main(void)
 	printf("With StandardLib\n");
 	#endif
 	
-	/* Calculate temperature of the chip in Kelvin */
-	temp_k = XMC1000_CalcTemperature();
-	/* Convert temperature to Celcius */
-	temp_C = temp_k - 273;	
-	printf("TSE_I=%u 'C\n",temp_C);
+//	printf("Unalignment Access\n");
+//	uint8_t testU8_Arr[8] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+	//These accesses will generate hardfault
+//	printf("%04X\n", *(uint16_t*)(testU8_Arr + 1));
+//	printf("%08X\n", *(uint32_t*)(testU8_Arr + 1));
 	
-	{
-		uint32_t tA = 10;
-		uint32_t tB = 20;
-		uint32_t tC = 30;
-		
-		TestFunct1(&tA, &tB, &tC);
-		printf("%u %u %u\n",
-		tA, tB, tC);
-	}
+//	printf("Stack Alignment\n");
+//	g_in_thread_msp = __get_MSP();
+//	printf("MSP:%08X\n", g_in_thread_msp);
+//	__set_MSP(g_in_thread_msp-1);
+//	g_in_thread_msp = __get_MSP();
+//	printf("MSP:%08X\n", g_in_thread_msp);
+//	__set_MSP(g_in_thread_msp-2);
+//	g_in_thread_msp = __get_MSP();
+//	printf("MSP:%08X\n", g_in_thread_msp);
+//	__set_MSP(g_in_thread_msp-3);
+//	g_in_thread_msp = __get_MSP();
+//	printf("MSP:%08X\n", g_in_thread_msp);
+//		__set_MSP(g_in_thread_msp-4);
+//	g_in_thread_msp = __get_MSP();
+//	printf("MSP:%08X\n", g_in_thread_msp);
 	
-	{
-		uint32_t tA = 10;
-		uint32_t tB = 20;
-		uint32_t tC = 30;
-		
-		TestFunct2(&tA, &tB, &tC);
-		printf("%u %u %u\n",
-		tA, tB, tC);
-	}
+//	testFunc();
 	
 	while (1)
   {
-		/* Calculate temperature of the chip in Kelvin */
-		temp_k = XMC1000_CalcTemperature();
-
 		/* Convert temperature to Celcius */
-		temp_C = temp_k - 273;
+//		temp_C = XMC_SCU_CalcTemperature() - 273;
 
-		printf("TSE_I=%u 'C\n",temp_C);
-				
-    LED_On(0);
-    LED_On(1);
-		
-		lockTick = HAL_GetTick();
-		while((lockTick+40000) > HAL_GetTick())
-		{
-			__NOP();
-			__WFI();
-		}
-		
-    LED_Off(0);
-    LED_Off(1);
-		
-		lockTick = HAL_GetTick();
-		while((lockTick+40000) > HAL_GetTick())
-		{
-			__NOP();
-			__WFI();
-		}		
+		g_in_thread_msp = __get_MSP();
+		__NOP();
+//		printf("%08X\n",g_in_thread_msp);
+//				
+//		lockTick = HAL_GetTick();
+//		while((lockTick+4) > HAL_GetTick())
+//		{
+//			__NOP();
+//		}	
   }
 }
