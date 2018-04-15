@@ -46,10 +46,10 @@ int stdout_putchar(int ch)
 uint32_t g_in_handler_msp;
 void SysTick_Handler(void)
 {
-//  g_Ticks++;
+  g_Ticks++;
 	
-	g_in_handler_msp = __get_MSP();
-	__NOP();
+//	g_in_handler_msp = __get_MSP();
+//	__NOP();
 //	printf("gMSP:%08X\n", g_in_handler_msp);
 }     
 
@@ -66,13 +66,13 @@ void testFunc(void)
 uint32_t g_in_thread_msp;
 uint32_t lockTick;
 uint32_t temp_C;
+uint8_t tmpU8;
 int main(void)
 {
 	/* Enable DTS */
 	XMC_SCU_StartTempMeasurement();
 	
-//  SysTick_Config(SystemCoreClock / 1000);
-  SysTick_Config(SystemCoreClock / 2);
+  SysTick_Config(SystemCoreClock / 1000);
 	
   /*Initialize the UART driver */
   UARTdrv->Initialize(UART_cb);
@@ -88,7 +88,7 @@ int main(void)
 	  
 	LED_Initialize();
 	
-	printf("XMC2Go Fault Test demo @ %u Hz %08X %08X %u\n", 
+	printf("XMC2Go SVC Table Test demo @ %u Hz %08X %08X %u\n", 
 	SystemCoreClock, 
 	SCB->CPUID, 
 	SCB->CCR,
@@ -127,16 +127,56 @@ int main(void)
 	while (1)
   {
 		/* Convert temperature to Celcius */
-//		temp_C = XMC_SCU_CalcTemperature() - 273;
+		temp_C = XMC_SCU_CalcTemperature() - 273;
 
 		g_in_thread_msp = __get_MSP();
 		__NOP();
-//		printf("%08X\n",g_in_thread_msp);
-//				
-//		lockTick = HAL_GetTick();
-//		while((lockTick+4) > HAL_GetTick())
-//		{
-//			__NOP();
-//		}	
+		printf("%u, %08X\n", temp_C, g_in_thread_msp);
+		
+		tmpU8 = HAL_GetTick()%0x9;
+		switch(tmpU8)
+		{
+			case 0:
+			__ASM("SVC #0");
+			break;
+			
+			case 1:
+			__ASM("SVC #1");
+			break;
+
+			case 2:
+			__ASM("SVC #2");
+			break;
+
+			case 3:
+			__ASM("SVC #3");
+			break;
+
+			case 4:
+			__ASM("SVC #4");
+			break;
+
+			case 5:
+			__ASM("SVC #5");
+			break;			
+
+			case 6:
+			__ASM("SVC #6");
+			break;
+
+			case 7:
+			__ASM("SVC #7");
+			break;
+			
+			default:
+			__ASM("SVC #8");
+			break;				
+		}
+		
+		lockTick = HAL_GetTick();
+		while((lockTick+4000) > HAL_GetTick())
+		{
+			__NOP();
+		}	
   }
 }
