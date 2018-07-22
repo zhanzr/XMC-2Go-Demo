@@ -13,7 +13,7 @@ void SVC_Handler(uint32_t dummy, uint32_t sn)
 	printf("%s>%u\n", __func__, sn);
 	
 	//This line will induce a hardfault		
-	__ASM("SVC #0");
+//	__ASM("SVC #0");
 }
 
 void PendSV_Handler(void)
