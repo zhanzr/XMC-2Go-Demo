@@ -71,7 +71,7 @@ void ERU0_3_IRQHandler(void)
 	{;}
 }
 
-__weak void USIC0_0_IRQHandler(void)
+void USIC0_0_IRQHandler(void)
 {
 	printf(__FUNCTION__);
 	while(1)

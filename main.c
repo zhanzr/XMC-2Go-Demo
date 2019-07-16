@@ -4,91 +4,85 @@
 #include <string.h>
 #include <math.h>
 #include <xmc_scu.h>
+#include <xmc_rtc.h>
+#include <xmc_uart.h>
 
-#include "xmc_uart.h"
-#include "Board_LED.h"
-#include "Driver_USART.h"
+#include "led.h"
+#include "core_portme.h"
 
-extern ARM_DRIVER_USART Driver_USART0;
-static ARM_DRIVER_USART *UARTdrv = &Driver_USART0; 
+#define UART_RX P2_2
+#define UART_TX P2_1
+
+XMC_GPIO_CONFIG_t uart_tx;
+XMC_GPIO_CONFIG_t uart_rx;
+
 __IO uint32_t g_Ticks;
 
-void UART_cb(uint32_t event)
+/* UART configuration */
+const XMC_UART_CH_CONFIG_t uart_config = 
+{	
+  .data_bits = 8U,
+  .stop_bits = 1U,
+  .baudrate = 921600U
+};
+
+XMC_RTC_CONFIG_t rtc_config =
 {
-    switch (event)
-    {
-    case ARM_USART_EVENT_RECEIVE_COMPLETE:  
-     break;
-     
-    case ARM_USART_EVENT_TRANSFER_COMPLETE:
-    case ARM_USART_EVENT_SEND_COMPLETE:
-    case ARM_USART_EVENT_TX_COMPLETE:
-        break;
- 
-    case ARM_USART_EVENT_RX_TIMEOUT:
-		/* Error: Call debugger or replace with custom error handling */
-        break;
- 
-    case ARM_USART_EVENT_RX_OVERFLOW:
-    case ARM_USART_EVENT_TX_UNDERFLOW:
-		default:
-		/* Error: Call debugger or replace with custom error handling */
-        break;
-    }
-}
-  
-int stdout_putchar(int ch)
+  .time.seconds = 5U,
+  .prescaler = 0x7fffU
+};     
+
+XMC_RTC_TIME_t init_rtc_time = 
 {
-	XMC_UART_CH_Transmit(XMC_UART0_CH0, ch);
+	.year = 2017,
+	.month = XMC_RTC_MONTH_JANUARY,
+	.daysofweek = XMC_RTC_WEEKDAY_TUESDAY,
+	.days = 17,
+	.hours = 5,
+	.minutes = 6,
+	.seconds = 55	
+};
+
+int stdout_putchar (int ch)
+{
+	XMC_UART_CH_Transmit(XMC_UART0_CH0, (uint8_t)ch);
 	return ch;
 }
 
-uint32_t g_in_handler_msp;
-void SysTick_Handler(void)
-{
+void SysTick_Handler(void) {
   g_Ticks++;
-	
-//	g_in_handler_msp = __get_MSP();
-//	__NOP();
-//	printf("gMSP:%08X\n", g_in_handler_msp);
 }     
 
-uint32_t HAL_GetTick(void)
-{
+uint32_t HAL_GetTick(void) {
 	return g_Ticks;
 }
 
-void testFunc(void)
+void original_main(void)
 {
-	printf("MSP:%08X\n", __get_MSP());
-}
-
-uint32_t g_in_thread_msp;
-uint32_t lockTick;
-uint32_t temp_C;
-uint8_t tmpU8;
-int main(void)
-{
-	/* Enable DTS */
-	XMC_SCU_StartTempMeasurement();
+	__IO uint32_t tmpTick;
+	__IO uint32_t deltaTick;
+	__IO uint32_t i=0;		
 	
-  SysTick_Config(SystemCoreClock / 1000);
+//	__IO XMC_RTC_TIME_t now_rtc_time;
+
+  /* System timer configuration */
+  SysTick_Config(SystemCoreClock / CLOCKS_PER_SEC);
 	
   /*Initialize the UART driver */
-  UARTdrv->Initialize(UART_cb);
-  UARTdrv->PowerControl(ARM_POWER_FULL);
-  UARTdrv->Control(ARM_USART_MODE_ASYNCHRONOUS |
-                   ARM_USART_DATA_BITS_8 |
-                   ARM_USART_PARITY_NONE |
-                   ARM_USART_STOP_BITS_1 , 256000);
-   
-  /* Enable the Transmitter/Receiver line */
-  UARTdrv->Control (ARM_USART_CONTROL_TX, 1);
-  UARTdrv->Control (ARM_USART_CONTROL_RX, 1);
-	  
-	LED_Initialize();
+	uart_tx.mode = XMC_GPIO_MODE_OUTPUT_PUSH_PULL_ALT6;
+	uart_rx.mode = XMC_GPIO_MODE_INPUT_TRISTATE;
+ /* Configure UART channel */
+  XMC_UART_CH_Init(XMC_UART0_CH0, &uart_config);
+  XMC_UART_CH_SetInputSource(XMC_UART0_CH0, XMC_UART_CH_INPUT_RXD1, USIC0_C0_DX3_P2_2);
+  
+	/* Start UART channel */
+  XMC_UART_CH_Start(XMC_UART0_CH0);
+
+  /* Configure pins */
+	XMC_GPIO_Init(UART_TX, &uart_tx);
+  XMC_GPIO_Init(UART_RX, &uart_rx);
 	
-	printf("XMC2Go SVC Table Test demo @ %u Hz %08X %08X %u\n", 
+	printf("XMC2Go Coremark @ %u Hz %08X %08X %u\n", 
 	SystemCoreClock, 
 	SCB->CPUID, 
 	SCB->CCR,
@@ -122,61 +116,22 @@ int main(void)
 //	g_in_thread_msp = __get_MSP();
 //	printf("MSP:%08X\n", g_in_thread_msp);
 	
-//	testFunc();
+	LED_Initialize();
 	
-	while (1)
-  {
-		/* Convert temperature to Celcius */
-		temp_C = XMC_SCU_CalcTemperature() - 273;
+//	while (1) {
+//		/* Convert temperature to Celcius */
+//		temp_C = XMC_SCU_CalcTemperature() - 273;
 
-		g_in_thread_msp = __get_MSP();
-		__NOP();
-		printf("%u, %08X\n", temp_C, g_in_thread_msp);
-		
-		tmpU8 = HAL_GetTick()%0x9;
-		switch(tmpU8)
-		{
-			case 0:
-			__ASM("SVC #0");
-			break;
-			
-			case 1:
-			__ASM("SVC #1");
-			break;
+//		g_in_thread_msp = __get_MSP();
+//		__NOP();
+//		printf("%u, %08X\n", temp_C, g_in_thread_msp);
+//		
+//		tmpU8 = HAL_GetTick()%0x9;
 
-			case 2:
-			__ASM("SVC #2");
-			break;
-
-			case 3:
-			__ASM("SVC #3");
-			break;
-
-			case 4:
-			__ASM("SVC #4");
-			break;
-
-			case 5:
-			__ASM("SVC #5");
-			break;			
-
-			case 6:
-			__ASM("SVC #6");
-			break;
-
-			case 7:
-			__ASM("SVC #7");
-			break;
-			
-			default:
-			__ASM("SVC #8");
-			break;				
-		}
-		
-		lockTick = HAL_GetTick();
-		while((lockTick+4000) > HAL_GetTick())
-		{
-			__NOP();
-		}	
-  }
+//		lockTick = HAL_GetTick();
+//		while((lockTick+4000) > HAL_GetTick())
+//		{
+//			__NOP();
+//		}	
+//  }
 }

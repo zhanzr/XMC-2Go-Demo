@@ -1,6 +1,6 @@
 
 /*
- * Auto generated Run-Time-Environment Component Configuration File
+ * Auto generated Run-Time-Environment Configuration File
  *      *** Do not modify ! ***
  *
  * Project: 'x2go' 
@@ -16,9 +16,9 @@
  */
 #define CMSIS_device_header "XMC1100.h"
 
+/*  Keil.ARM Compiler::Compiler:I/O:STDOUT:User:1.2.0 */
 #define RTE_Compiler_IO_STDOUT          /* Compiler I/O: STDOUT */
           #define RTE_Compiler_IO_STDOUT_User     /* Compiler I/O: STDOUT User */
-#define RTE_DEVICE
-#define RTE_Drivers_USART
+
 
 #endif /* RTE_COMPONENTS_H */

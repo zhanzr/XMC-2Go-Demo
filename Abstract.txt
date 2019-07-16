@@ -1,3 +1,0 @@
-Use Flash to emulate an EEPROM.
-
-The code is in another project.
