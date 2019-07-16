@@ -5,9 +5,9 @@
 #include <math.h>
 #include <xmc_scu.h>
 
-#include "Driver_USART.h"
 #include "xmc_uart.h"
 #include "Board_LED.h"
+#include "Driver_USART.h"
 
 extern ARM_DRIVER_USART Driver_USART0;
 static ARM_DRIVER_USART *UARTdrv = &Driver_USART0; 
