@@ -402,6 +402,11 @@
               <FileType>1</FileType>
               <FilePath>.\XMC1000_tseRoutine.c</FilePath>
             </File>
+            <File>
+              <FileName>math_helper.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\math_helper.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -431,6 +436,12 @@
     <apis/>
     <components>
       <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.3.0" condition="ARMv6_7_8-M Device">
+        <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0"/>
+        <targetInfos>
+          <targetInfo name="x2go"/>
+        </targetInfos>
+      </component>
+      <component Cclass="CMSIS" Cgroup="DSP" Cvariant="Library" Cvendor="ARM" Cversion="1.7.0" condition="CMSIS DSP">
         <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0"/>
         <targetInfos>
           <targetInfo name="x2go"/>
