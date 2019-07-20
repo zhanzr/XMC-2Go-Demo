@@ -49,7 +49,7 @@ XMC_RTC_CONFIG_t rtc_config =
 
 XMC_RTC_TIME_t init_rtc_time = 
 {
-	.year = 2017,
+	.year = 2019,
 	.month = XMC_RTC_MONTH_JANUARY,
 	.daysofweek = XMC_RTC_WEEKDAY_TUESDAY,
 	.days = 17,
@@ -127,9 +127,21 @@ int main(void)
 	__IO uint32_t deltaTick;
 	__IO uint32_t lockTick;
 	bool testRes;
+	__IO XMC_RTC_TIME_t now_rtc_time;
 
 		/* Enable DTS */
 	XMC_SCU_StartTempMeasurement();
+	
+	//RTC
+  XMC_RTC_Init(&rtc_config);
+	
+	XMC_RTC_SetTime(&init_rtc_time);
+	
+//  XMC_RTC_EnableEvent(XMC_RTC_EVENT_PERIODIC_SECONDS);
+//  XMC_SCU_INTERRUPT_EnableEvent(XMC_SCU_INTERRUPT_EVENT_RTC_PERIODIC);
+//  NVIC_SetPriority(SCU_1_IRQn, 3);
+//  NVIC_EnableIRQ(SCU_1_IRQn);
+  XMC_RTC_Start();
 	
   /* System timer configuration */
   SysTick_Config(SystemCoreClock / HZ);
@@ -361,6 +373,9 @@ int main(void)
 		/* Convert temperature to Celcius */
 		int32_t temp_C = (int32_t)XMC_SCU_CalcTemperature() - 273;
 		printf("temperature: %i\n", temp_C);
+		
+		XMC_RTC_GetTime(&now_rtc_time);
+		printf("%02d:%02d:%02d\n", now_rtc_time.hours, now_rtc_time.minutes, now_rtc_time.seconds);
 		
 		lockTick = HAL_GetTick();
 		while((lockTick + 2*HZ) > HAL_GetTick())

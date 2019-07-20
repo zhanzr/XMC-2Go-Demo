@@ -1,4 +1,5 @@
 #include <XMC1100.h>
+#include <XMC_rtc.h>
 #include <stdio.h>
 
 void HardFault_Handler(void)
@@ -30,13 +31,11 @@ void SCU_0_IRQHandler(void)
 	{;}
 }
 
-void SCU_1_IRQHandler(void)
-{
-	printf(__FUNCTION__);
-	while(1)
-	{;}
+//RTC Alarm
+void SCU_1_IRQHandler(void){
+	XMC_RTC_ClearEvent(XMC_RTC_EVENT_PERIODIC_SECONDS);	
 }
-                      
+                    
 void SCU_2_IRQHandler(void)
 {
 	printf(__FUNCTION__);
